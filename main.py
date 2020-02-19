@@ -1,9 +1,9 @@
 import os
 import sys
-
 import requests
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+
 
 SCREEN_SIZE = [600, 450]
 
@@ -16,13 +16,8 @@ class Example(QWidget):
 
     def getImage(self):
         map_request = "http://static-maps.yandex.ru/1.x/"
-        params = {
-            'll': '40.588386,55.633778',
-            'z': '10',
-            'l': 'map'
-        }
+        params = {'ll': '40.588386,55.633778', 'z': '10', 'l': 'map'}
         response = requests.get(map_request, params=params)
-
         if not response:
             print("Ошибка выполнения запроса:")
             print(map_request)
@@ -35,8 +30,6 @@ class Example(QWidget):
     def initUI(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
         self.setWindowTitle('Отображение карты')
-
-        ## Изображение
         self.pixmap = QPixmap(self.map_file)
         self.image = QLabel(self)
         self.image.move(0, 0)
