@@ -23,6 +23,7 @@ class Example(QWidget):
             'l': 'map'
         }
         response = requests.get(map_request, params=params)
+        print(1)
         if not response:
             print("Ошибка выполнения запроса:")
             print(map_request)
@@ -31,6 +32,7 @@ class Example(QWidget):
         self.map_file = "map.png"
         with open(self.map_file, "wb") as file:
             file.write(response.content)
+        self.initUI()
 
     def initUI(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
