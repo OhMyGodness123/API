@@ -4,7 +4,7 @@ import sys
 import requests
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton
 
 SCREEN_SIZE = [600, 450]
 
@@ -14,6 +14,11 @@ class Example(QWidget):
         super().__init__()
         self.zoom = 9
         self.image = QLabel(self)
+        self.btn = QPushButton('Карта', self)
+        self.resize(25, 250)
+        self.btn.move(525, 425)
+        self.btn.clicked.connect(self.run)
+        self.map = 'map'
         self.coord_x = 40.588386
         self.coord_y = 55.633778
         self.image.move(0, 0)
@@ -25,7 +30,7 @@ class Example(QWidget):
         map_request = "http://static-maps.yandex.ru/1.x/"
         params = {
             'll': ','.join([str(self.coord_x), str(self.coord_y)]),
-            'l': 'map',
+            'l': self.map,
             'z': str(self.zoom)
         }
         response = requests.get(map_request, params=params)
@@ -65,6 +70,18 @@ class Example(QWidget):
             if self.zoom != 17:
                 self.zoom += 1
                 self.getImage()
+
+    def run(self):
+        if self.btn.text() == 'Карта':
+            self.btn.setText('Спутник')
+            self.map = 'sat'
+        elif self.btn.text() == 'Спутник':
+            self.btn.setText('Гибрид')
+            self.map = 'skl'
+        else:
+            self.btn.setText('Карта')
+            self.map = 'map'
+        self.getImage()
 
     def add_pix(self):
         self.pixmap = QPixmap(self.map_file)
