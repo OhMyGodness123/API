@@ -14,6 +14,8 @@ class Example(QWidget):
         super().__init__()
         self.zoom = 9
         self.image = QLabel(self)
+        self.coord_x = 40.588386
+        self.coord_y = 55.633778
         self.image.move(0, 0)
         self.image.resize(600, 450)
         self.getImage()
@@ -22,9 +24,9 @@ class Example(QWidget):
     def getImage(self):
         map_request = "http://static-maps.yandex.ru/1.x/"
         params = {
-            'll': '40.588386,55.633778',
-            'z': str(self.zoom),
-            'l': 'map'
+            'll': ','.join([str(self.coord_x), str(self.coord_y)]),
+            'l': 'map',
+            'z': str(self.zoom)
         }
         response = requests.get(map_request, params=params)
         if not response:
@@ -43,6 +45,18 @@ class Example(QWidget):
         self.add_pix()
 
     def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Left:
+            self.coord_x -= 0.01
+            self.getImage()
+        if event.key() == Qt.Key_Right:
+            self.coord_x += 0.01
+            self.getImage()
+        if event.key() == Qt.Key_Down:
+            self.coord_y -= 0.01
+            self.getImage()
+        if event.key() == Qt.Key_Up:
+            self.coord_y += 0.01
+            self.getImage()
         if event.key() == Qt.Key_PageDown:
             if self.zoom != 0:
                 self.zoom -= 1
