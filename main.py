@@ -14,11 +14,12 @@ class Example(QWidget):
         super().__init__()
         self.zoom = 9
         self.image = QLabel(self)
-        self.btn = QPushButton('Карта', self)
+        self.btn = QPushButton('Схема', self)
         self.resize(25, 250)
         self.btn.move(525, 425)
         self.btn.clicked.connect(self.run)
         self.map = 'map'
+        self.map_file = "map.png"
         self.coord_x = 40.588386
         self.coord_y = 55.633778
         self.image.move(0, 0)
@@ -39,15 +40,15 @@ class Example(QWidget):
             print(map_request)
             print("Http статус:", response.status_code, "(", response.reason, ")")
             sys.exit(1)
-        self.map_file = "map.png"
         with open(self.map_file, "wb") as file:
             file.write(response.content)
-        self.add_pix()
+        self.pixmap = QPixmap(self.map_file)
+        self.image.setPixmap(self.pixmap)
+        self.update()
 
     def initUI(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
         self.setWindowTitle('Отображение карты')
-        self.add_pix()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Left:
@@ -72,21 +73,19 @@ class Example(QWidget):
                 self.getImage()
 
     def run(self):
-        if self.btn.text() == 'Карта':
+        if self.btn.text() == 'Схема':
             self.btn.setText('Спутник')
             self.map = 'sat'
+            self.map_file = 'map.jpg'
         elif self.btn.text() == 'Спутник':
             self.btn.setText('Гибрид')
             self.map = 'skl'
-        else:
-            self.btn.setText('Карта')
+            self.map_file = 'map.png'
+        elif self.btn.text() == 'Гибрид':
+            self.btn.setText('Схема')
             self.map = 'map'
+            self.map_file = 'map.png'
         self.getImage()
-
-    def add_pix(self):
-        self.pixmap = QPixmap(self.map_file)
-        self.image.setPixmap(self.pixmap)
-        self.update()
 
     def closeEvent(self, event):
         os.remove(self.map_file)
