@@ -1,91 +1,84 @@
+import sys
+from io import BytesIO
+import requests
+from PIL import Image
+import pprint
 import os
 import sys
-
 import requests
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit
 
-SCREEN_SIZE = [600, 450]
+SCREEN_SIZE = [800, 450]
 
 
 class Example(QWidget):
     def __init__(self):
         super().__init__()
-        self.zoom = 9
         self.image = QLabel(self)
-        self.btn = QPushButton('Схема', self)
-        self.resize(25, 250)
-        self.btn.move(525, 425)
-        self.btn.clicked.connect(self.run)
         self.map = 'map'
         self.map_file = "map.png"
-        self.coord_x = 40.588386
-        self.coord_y = 55.633778
         self.image.move(0, 0)
         self.image.resize(600, 450)
+        self.line = QLineEdit(self)
+        self.line.move(650, 160)
+        self.text = 'парк'
+        self.btn = QPushButton('Искать', self)
+        self.btn.resize(100, 30)
+        self.btn.move(670, 200)
+        self.btn.clicked.connect(self.run)
         self.getImage()
         self.initUI()
 
     def getImage(self):
-        map_request = "http://static-maps.yandex.ru/1.x/"
-        params = {
-            'll': ','.join([str(self.coord_x), str(self.coord_y)]),
-            'l': self.map,
-            'z': str(self.zoom)
+        print(self.text)
+        search_api_server = "https://search-maps.yandex.ru/v1/"
+        api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+        address_ll = "37.588392,55.734036"
+        search_params = {
+            "apikey": api_key,
+            "text": self.text,
+            "lang": "ru_RU",
+            "ll": address_ll,
+            "type": "biz"
         }
-        response = requests.get(map_request, params=params)
+        response = requests.get(search_api_server, params=search_params)
         if not response:
             print("Ошибка выполнения запроса:")
-            print(map_request)
+            print(search_api_server)
             print("Http статус:", response.status_code, "(", response.reason, ")")
             sys.exit(1)
+        json_response = response.json()
+        organization = json_response['features'][0]
+        org_name = organization["properties"]["CompanyMetaData"]["name"]
+        org_address = organization["properties"]["CompanyMetaData"]["address"]
+        point = organization["geometry"]["coordinates"]
+        org_point = "{0},{1}".format(point[0], point[1])
+        delta = "0.005"
+        map_params = {
+            "ll": address_ll,
+            "spn": ",".join([delta, delta]),
+            "l": "map",
+            "pt": "{0},pm2dgl".format(org_point)
+        }
+        map_api_server = "http://static-maps.yandex.ru/1.x/"
+        response = requests.get(map_api_server, params=map_params)
+        print(response)
         with open(self.map_file, "wb") as file:
             file.write(response.content)
         self.pixmap = QPixmap(self.map_file)
         self.image.setPixmap(self.pixmap)
         self.update()
 
+    def run(self):
+        self.text = self.line.text()
+        self.line.clear()
+        self.getImage()
+
     def initUI(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
         self.setWindowTitle('Отображение карты')
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Left:
-            self.coord_x -= 0.01
-            self.getImage()
-        if event.key() == Qt.Key_Right:
-            self.coord_x += 0.01
-            self.getImage()
-        if event.key() == Qt.Key_Down:
-            self.coord_y -= 0.01
-            self.getImage()
-        if event.key() == Qt.Key_Up:
-            self.coord_y += 0.01
-            self.getImage()
-        if event.key() == Qt.Key_PageDown:
-            if self.zoom != 0:
-                self.zoom -= 1
-                self.getImage()
-        if event.key() == Qt.Key_PageUp:
-            if self.zoom != 17:
-                self.zoom += 1
-                self.getImage()
-
-    def run(self):
-        if self.btn.text() == 'Схема':
-            self.btn.setText('Спутник')
-            self.map = 'sat'
-            self.map_file = 'map.jpg'
-        elif self.btn.text() == 'Спутник':
-            self.btn.setText('Гибрид')
-            self.map = 'skl'
-            self.map_file = 'map.png'
-        elif self.btn.text() == 'Гибрид':
-            self.btn.setText('Схема')
-            self.map = 'map'
-            self.map_file = 'map.png'
-        self.getImage()
 
     def closeEvent(self, event):
         os.remove(self.map_file)
